@@ -4,16 +4,19 @@
 #include "equation-generator.h"
 #include "equation-validator.h"
 
+#include <avr/eeprom.h>
+
 #define ERASE_MEMORY false
 #define SERIAL_ENABLED false
-#define SOLVED_COUNT_ADDRESS 0 
-#define WRONG_COUNT_ADDRESS 2
+#define SOLVED_COUNT_ADDRESS 10 
+#define WRONG_COUNT_ADDRESS 12
 
 EquationGenerator equationGenerator;
 EquationValidator equationValidator;
 Arduboy2 arduboy;
 
-const int backspaceIndex = 10;
+const int minusIndex = 10;
+const int backspaceIndex = 11;
 int selectedNumber = 0;
 int confirmNumber = -1;
 
@@ -42,6 +45,7 @@ void setup() {
   arduboy.flashlight();
   arduboy.waitNoButtons();
   arduboy.setFrameDuration(50);
+  arduboy.initRandomSeed();
 
   solvedEquations = readInt(SOLVED_COUNT_ADDRESS);
   wrongAnswers = readInt(WRONG_COUNT_ADDRESS);
@@ -112,7 +116,7 @@ void displayResult(String result) {
 }
 
 void displayNumberSelect() {
-  const int start = 16;
+  const int start = 6;
   const int digitWidth = 10;
   const int yPosition = 55;
   const int framePadding = 2;
@@ -124,6 +128,10 @@ void displayNumberSelect() {
     arduboy.print(i);
   }
 
+  // Draw minus
+  arduboy.setCursor(start + minusIndex * digitWidth, yPosition);
+  arduboy.print("-");
+  
   // Draw backspace
   arduboy.setCursor(start + backspaceIndex * digitWidth, yPosition);
   arduboy.print("<");
@@ -147,7 +155,6 @@ void displayNumberSelect() {
 }
 
 void generateNewEquation() {
-  arduboy.initRandomSeed();
   equation = equationGenerator.generate(level);
 }
 
@@ -156,7 +163,7 @@ void handleButtons() {
   if (arduboy.justPressed(RIGHT_BUTTON)) {
     confirmNumber = -1;
     selectedNumber = selectedNumber + 1;
-    if (selectedNumber > 10) {
+    if (selectedNumber > 11) {
       selectedNumber = 0;
     }
   }
@@ -165,19 +172,22 @@ void handleButtons() {
     confirmNumber = -1;
     selectedNumber = selectedNumber - 1;
     if (selectedNumber < 0) {
-      selectedNumber = 10;
+      selectedNumber = 11;
     }
   }
 
   // Number / backspace confirm
   if (arduboy.justPressed(B_BUTTON)) {
-    // 10 is a backspace
+    // 10 is a minus, 11 is a backspace
     if (selectedNumber == backspaceIndex) {
       // Remove last
       const int resultLength = result.length();
       if (resultLength > 0) {
         result.remove(resultLength - 1);
       }
+    } else if (selectedNumber == minusIndex) {
+      // Add minus
+      result += "-";
     } else {
       confirmNumber = selectedNumber;
       result += String(selectedNumber);
