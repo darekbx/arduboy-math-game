@@ -44,6 +44,30 @@ String EquationGenerator::generate(int level) {
     + String(thirdNumber);
 }
 
+int* EquationGenerator::generateRandom(int minimum, int maximum) {
+  byte count = 0;
+  byte numCount = 3; 
+  boolean done = false;
+  int outArray[count];
+  while (!done)
+  {
+    int x = random(max(minimum, 1), (minimum + maximum));  
+    boolean exists = false;
+    for (int i= 0; i < count && exists == false; i++) 
+    {
+      if (x == outArray[i]) exists = true;
+    }
+    if (exists == false)
+    {
+      outArray[count] = x;
+      count++;
+    }
+    done = (count == numCount);
+  }
+  return outArray;
+}
+
+
 char EquationGenerator::randomModificator() {
   return this->modificators[random(MODIFICATORS_SIZE)];
 }
@@ -53,5 +77,7 @@ char EquationGenerator::randomAddSubModificator() {
 }
 
 int EquationGenerator::randomInt(int minimum, int maximum) {
-  return random((minimum + maximum), max(minimum, 1));
+  delay(random(100));
+  int* randomNumbers = this->generateRandom(minimum, maximum);
+  return *(randomNumbers + random(2));
 }

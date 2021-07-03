@@ -10,6 +10,7 @@
 #define SERIAL_ENABLED false
 #define SOLVED_COUNT_ADDRESS 10 
 #define WRONG_COUNT_ADDRESS 12
+#define SEED_ADDRESS 14
 
 EquationGenerator equationGenerator;
 EquationValidator equationValidator;
@@ -20,18 +21,21 @@ const int backspaceIndex = 11;
 int selectedNumber = 0;
 int confirmNumber = -1;
 
+int seed = 1;
 int level = 1;
 int solvedEquations = 0;
 int correctAnswers = 0;
 int wrongAnswers = 0;
 String result = "";
 String equation = "";
+bool gameStarted = false;
 
 void setup() {
 
   #if ERASE_MEMORY
     saveInt(SOLVED_COUNT_ADDRESS, 0);
     saveInt(WRONG_COUNT_ADDRESS, 0);
+    saveInt(SEED_ADDRESS, 0);
     #endif
 
   #if SERIAL_ENABLED
@@ -45,7 +49,6 @@ void setup() {
   arduboy.flashlight();
   arduboy.waitNoButtons();
   arduboy.setFrameDuration(50);
-  arduboy.initRandomSeed();
 
   solvedEquations = readInt(SOLVED_COUNT_ADDRESS);
   wrongAnswers = readInt(WRONG_COUNT_ADDRESS);
@@ -58,7 +61,8 @@ void setup() {
     wrongAnswers = 0;
   }
 
-  generateNewEquation();
+  seed = readInt(SEED_ADDRESS);
+  saveInt(SEED_ADDRESS, readInt(SEED_ADDRESS) + 1);
 }
 
 void loop() {
@@ -71,17 +75,32 @@ void loop() {
   arduboy.setCursor(0, 0);
   arduboy.pollButtons();
 
-  handleButtons();
+  if (gameStarted) {
+
+    handleButtons();
+    
+    displaySummary();
+    displayLevel();
+    displayNumberSelect();
+    displayEquation(equation);
+    displayResult(result);
   
-  displaySummary();
-  displayLevel();
-  displayNumberSelect();
-  displayEquation(equation);
-  displayResult(result);
+    arduboy.digitalWriteRGB(RED_LED, RGB_OFF); 
+    arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF); 
+  } else {
+    arduboy.setCursor(4, 32);
+    arduboy.print("Press B key to start");
 
-  arduboy.digitalWriteRGB(RED_LED, RGB_OFF); 
-  arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF); 
-
+    // TODO: remove
+    arduboy.setCursor(0, 0);
+    arduboy.print(seed);
+    
+    if (arduboy.justPressed(B_BUTTON)) {
+      generateNewEquation();
+      gameStarted = true;
+    }
+  }
+  
   arduboy.display();
 }
 
@@ -155,6 +174,8 @@ void displayNumberSelect() {
 }
 
 void generateNewEquation() {
+  //arduboy.initRandomSeed();
+  randomSeed(seed + millis());
   equation = equationGenerator.generate(level);
 }
 

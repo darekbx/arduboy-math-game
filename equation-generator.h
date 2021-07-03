@@ -1,3 +1,4 @@
+
 #include <Arduino.h>
 
 #define MODIFICATORS_SIZE 3
@@ -11,6 +12,7 @@ class EquationGenerator {
     char randomModificator();
     char randomAddSubModificator();
     int randomInt(int minimum, int maximum);
+    int* EquationGenerator::generateRandom(int minimum, int maximum);
 
   public:
     EquationGenerator();
